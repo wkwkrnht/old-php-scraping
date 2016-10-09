@@ -1,5 +1,5 @@
 <?php
-namespace FeedWriter;
+//namespace FeedWriter;
 
 use \DateTime;
 
@@ -369,17 +369,17 @@ class Item
             $validSchemes = array('aaa', 'aaas', 'about', 'acap', 'acct', 'afs', 'cap', 'cid', 'coap', 'coaps', 'crid', 'data', 'dav', 'dict', 'dns', 'dtn', 'dvb', 'example', 'fax', 'file', 'filesystem', 'ftp', 'geo', 'go', 'gopher', 'h323', 'ham', 'http', 'https', 'iax', 'icap', 'icon', 'im', 'imap', 'info', 'ipn', 'ipp', 'ipps', 'iris', 'iris.beep', 'iris.lwz', 'iris.xpc', 'iris.xpcs', 'jabber', 'jms', 'ldap', 'mailserver', 'mailto', 'mid', 'modem', 'msrp', 'msrps', 'mtqp', 'mupdate', 'news', 'nfs', 'ni', 'nih', 'nntp', 'opaquelocktoken', 'pack', 'pkcs11', 'pop', 'pres', 'prospero', 'reload', 'rsync', 'rtsp', 'rtsps', 'rtspu', 'service', 'session', 'shttp', 'sieve', 'sip', 'sips', 'sms', 'snews', 'snmp', 'soap.beep', 'soap.beeps', 'stun', 'stuns', 'tag', 'tel', 'telnet', 'tftp', 'thismessage', 'tip', 'tn3270', 'turn', 'turns', 'tv', 'urn', 'vemmi', 'videotex', 'wais', 'ws', 'wss', 'xcon', 'xcon-userid', 'xmlrpc.beep', 'xmlrpc.beeps', 'xmpp', 'z39.50', 'z39.50r', 'z39.50s');
             $found = FALSE;
             $checkId = strtolower($id);
-            
+
             foreach($validSchemes as $scheme)
                 if (strrpos($checkId, $scheme . ':', -strlen($checkId)) !== FALSE)
                 {
                     $found = TRUE;
                     break;
                 }
-            
+
             if (!$found)
                 die("The ID must begin with an IANA-registered URI scheme.");
-            
+
             $this->addElement('id', $id, NULL, TRUE);
         } else
             die('A unique ID is not supported in RSS1 feeds.');

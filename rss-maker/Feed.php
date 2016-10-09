@@ -1,5 +1,5 @@
 <?php
-namespace FeedWriter;
+//namespace FeedWriter;
 
 use \DateTime;
 
@@ -71,7 +71,7 @@ abstract class Feed
     * Contains the format of this feed.
     */
     private $version   = null;
-    
+
     /**
     * Constructor
     *
@@ -104,7 +104,7 @@ abstract class Feed
     }
 
     // Start # public functions ---------------------------------------------
-    
+
     /**
     * Set the URLs for feed pagination.
     *
@@ -306,7 +306,7 @@ abstract class Feed
     {
         return $this->CDATAEncoding;
     }
-    
+
     /**
      * Remove tags from the list of CDATA encoded tags
      *
@@ -591,7 +591,7 @@ abstract class Feed
     public static function filterInvalidXMLChars($string, $replacement = '_') // default to '\x{FFFD}' ???
     {
         $result = preg_replace('/[^\x{0009}\x{000a}\x{000d}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]+/u', $replacement, $string);
-        
+
         // Did the PCRE replace failed because of bad UTF-8 data?
         // If yes, try a non-multibyte regex and without the UTF-8 mode enabled.
         if ($result == NULL && preg_last_error() == PREG_BAD_UTF8_ERROR)
@@ -600,7 +600,7 @@ abstract class Feed
         // In case the regex replacing failed completely, return the whole unfiltered string.
         if ($result == NULL)
             $result = $string;
-        
+
         return $result;
     }
     // End # public functions ----------------------------------------------
@@ -693,7 +693,7 @@ abstract class Feed
 
         return $out;
     }
-    
+
     /**
     * Closes the open tags at the end of file
     *
@@ -797,7 +797,7 @@ abstract class Feed
             if ($this->version == Feed::ATOM && strncmp($key, 'atom', 4) == 0) {
                 $key = substr($key, 5);
             }
-            
+
             // The channel element can occur multiple times, when the key 'content' is not in the array.
             if (!isset($value['content'])) {
                 // If this is the case, iterate through the array with the multiple elements.

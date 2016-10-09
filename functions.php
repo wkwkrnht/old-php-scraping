@@ -57,29 +57,60 @@ class MyDB{
         }
     }
 
-    function escape($str){return $this->mysqli->real_escape_string($str);}// 文字列をエスケープする
+    function escape($str){return $this->mysqli->real_escape_string($str);}
+}
+
+function get_data(){
+    $db    = new MyDB();
+    $json  = $db->query("SELECT * FROM rssdata");
+    $array = json_decode($json,true);
+    $data  = $array["result"];
+    return $data;
 }
 
 function set_card_info($url){
 	$rss = simplexml_load_file($url);
+    $db = new MyDB();
 	foreach($rss->channel->item as $item){
-		$link        = $item->link;
-		$title       = $item->title;
-        $description = mb_strimwidth(strip_tags($item->description),0,150,"…","utf-8");
-		$date        = date("Y年n月j日",strtotime($item->pubDate));
-        $db = new MyDB();
-        $db->query("INSERT INTO rssdata(url,title,description,day) VALUES('$link','$title','$description','$date')");
+		$link = $item->link;
+        $array_link = $db->query("SELECT link FROM rssdata");
+        $array_link = json_decode($array_link,true);
+        $array_link = $array["result"];
+        if(array_key_exists($link,$array_link)===false){
+            $title       = $item->title;
+            $description = mb_strimwidth(strip_tags($item->description),0,150,"…","utf-8");
+    		$date        = date("Y年n月j日",strtotime($item->pubDate));
+            $db->query("INSERT INTO rssdata(url,title,description,day) VALUES('$link','$title','$description','$date')");
+            require_once('twitteroauth/autoload.php');
+            use Abraham\TwitterOAuth\TwitterOAuth;
+
+            //認証情報４つ
+            $consumerKey       = "Wne0SgFMkbS7QNkt2p7AVBgop";
+            $consumerSecret    = "oAh5MesR9hhmghn6NfUYT1chcY7g2DmsLw5o3Srr56YB9X0cTs";
+            $accessToken       = "3197195484-ripEmUKUVoLn1zYogvAhyhv9MUtKdoHT4mT5LuX";
+            $accessTokenSecret = "ga8rHeIASryFGSne4YrDfNg9kTnzHhVEniFOUJH98ALnA";
+
+            //接続&ツイート&レスポンス確認
+            $connection = new TwitterOAuth($consumerKey,$consumerSecret,$accessToken,$accessTokenSecret);
+            $txt        = $title . $link;
+            $res        = $connection->post("statuses/update",array("status"=>$txt));
+            var_dump($txt);
+        }
 	}
 }
 
 function make_card(){
     $html = '';
-    $db   = new MyDB();
-    $json = $db->query("SELECT * FROM rssdata");
-    $array = json_decode($json,true);
-    $data = $array["result"];
+    $data = get_data();
     while(list($key,$val)=each($data)){
-        $html .= '<div class="card"><a href="' . $val["link"] . '" target="_blank"><h3 class="title">' . $val["title"] . '</h3><span class="date">' . $val["date"] . '</span><br /><p class="text">' . $val["description"] . '</p></a></div>';
+        $html .= '
+        <div class="card">
+            <a href="' . $val["link"] . '" target="_blank">
+                <h3 class="title">' . $val["title"] . '</h3>
+                <span class="date">' . $val["date"] . '</span><br>
+                <p class="text">' . $val["description"] . '</p>
+            </a>
+        </div>';
     }
     echo $html;
 }
@@ -87,75 +118,23 @@ function make_card(){
 function make_rss(){
     require_once('./src/Item.php');
 	require_once('./src/Feed.php');
-	date_default_timezone_set('Asia/Tokyo');
-    $db   = new MyDB();
-    $json = $db->query("SELECT * FROM rssdata");
-    $array = json_decode($json,true);
-    $data = $array["result"];
-    function atom($data){
-        require_once('./src/ATOM.php');
-        use \FeedWriter\ATOM;
-    	$feed = new ATOM;
-        $feed->setTitle('wkwkrnht-rss');
-        $feed->setLink('http://wkwkrnht.gegahost.net/');
-        $feed->setDate(new DateTime());
-        while(list($key,$val)=each($data)){
-            $item = $feed->createNewItem();
-            $item->setTitle($val["title"]);
-            $item->setLink($val["link"]);
-            $item->setDate(strtotime($val["date"]));
-            $item->setDescription($val["description"]);
-            $feed->addItem($item);
-        }
-        $xml  = $feed->generateFeed();
-        $file = './atom.xml';
-        @file_put_contents($file,$xml);
+    require_once('./src/ATOM.php');
+    date_default_timezone_set('Asia/Tokyo');
+    $data = get_data();
+    $feed = new ATOM;
+    $feed->setTitle('wkwkrnht');
+    $feed->setLink('http://wkwkrnht.gegahost.net/');
+    $feed->setDate(new DateTime());
+    while(list($key,$val)=each($data)){
+        $item = $feed->createNewItem();
+        $item->setTitle($val["title"]);
+        $item->setLink($val["link"]);
+        //$item->setDate(strtotime($val["date"]));
+        $item->setDescription($val["description"]);
+        $feed->addItem($item);
     }
-    function rss1($data){
-        require_once('./src/RSS1.php');
-        use \FeedWriter\RSS1;
-    	$feed = new RSS1;
-        $feed->setTitle('wkwkrnht-rss');
-        $feed->setLink('http://wkwkrnht.gegahost.net/');
-        $feed->setDate(new DateTime());
-        $feed->setDescription('wkwkrnhtのブログ');
-        $feed->setChannelAbout('http://wkwkrnht.gegahost.net/');
-        while(list($key,$val)=each($data)){
-            $item = $feed->createNewItem();
-            $item->setTitle($val["title"]);
-            $item->setLink($val["link"]);
-            $item->setDate(strtotime($val["date"]));
-            $item->setDescription($val["description"]);
-            $feed->addItem($item);
-        }
-        $xml  = $feed->generateFeed();
-        $file = './rss1.xml';
-        @file_put_contents($file,$xml);
-    }
-    function rss2($data){
-        require_once('./src/RSS2.php');
-        use \FeedWriter\RSS2;
-    	$feed = new RSS2;
-        $feed->setTitle('wkwkrnht-rss');
-        $feed->setLink('http://wkwkrnht.gegahost.net/');
-        $feed->setDate(new DateTime(),time());
-        $feed->setDescription('wkwkrnhtのブログ');
-        $feed->setChannelAbout('http://wkwkrnht.gegahost.net/');
-        while(list($key,$val)=each($data)){
-            $item = $feed->createNewItem();
-            $item->setId($val["link"],true);
-            $item->setTitle($val["title"]);
-            $item->setLink($val["link"]);
-            $item->setDate(strtotime($val["date"]));
-            $item->setDescription($val["description"]);
-            $feed->addItem($item);
-        }
-        $xml  = $feed->generateFeed();
-        $file = './rss2.xml';
-        @file_put_contents($file,$xml);
-    }
-    atom($data);
-    rss1($data);
-    rss2($data);
+    $xml  = $feed->generateFeed();
+    $file = 'atom.xml';
+    @file_put_contents($file,$xml);
 }
 ?>

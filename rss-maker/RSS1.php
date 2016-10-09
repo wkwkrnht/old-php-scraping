@@ -1,5 +1,5 @@
 <?php
-namespace FeedWriter;
+//namespace FeedWriter;
 
 /*
  * Copyright (C) 2012 Michael Bemmerl <mail@mx-server.de>
@@ -21,17 +21,17 @@ namespace FeedWriter;
  */
 
 /**
- * Wrapper for creating RSS2 feeds
+ * Wrapper for creating RSS1 feeds
  *
  * @package     UniversalFeedWriter
  */
-class RSS2 extends Feed
+class RSS1 extends Feed
 {
     /**
     * {@inheritdoc}
     */
     public function __construct()
     {
-        parent::__construct(Feed::RSS2);
+        parent::__construct(Feed::RSS1);
     }
 }
