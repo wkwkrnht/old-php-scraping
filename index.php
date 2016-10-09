@@ -15,15 +15,10 @@
 		</header>
 		<main id="feed">
 			<?php
-			$rss1=simplexml_load_file('https://wkwkrnht.wordpress.com/feed/');
-				foreach($rss1->channel->item as $item){$link=$item->link;$title=$item->title;$date=date("Y年n月j日",strtotime($item->pubDate));$description=mb_strimwidth(strip_tags($item->description),0,150,"…","utf-8");echo'<div class="card"><a href="' . $link . '" target="_blank"><h3 class="title">' . $title . '</h3><span class="date">' . $date . '</span><br /><p class="text">' . $description . '</p></a></div>';};
-			$rss2=simplexml_load_file('http://wkwkrnht.gegahost.net/feed/');
-				foreach($rss2->channel->item as $item){$link=$item->link;$title=$item->title;$date=date("Y年n月j日",strtotime($item->pubDate));$description=mb_strimwidth(strip_tags($item->description),0,150,"…","utf-8");echo'<div class="card"><a href="' . $link . '" target="_blank"><h3 class="title">' . $title . '</h3><span class="date">' . $date . '</span><br /><p class="text">' . $description . '</p></a></div>';};
-			?>
+			$url = array('https://wkwkrnht.wordpress.com/feed/','http://wkwkrnht.gegahost.net/feed/');
+		   	while($val=current($url)){set_card_info($val);next($url);}
+			make_card();
+			make_rss();?>
 		</main>
-		<?php
-		set_card_info('http://wkwkrnht.gegahost.net/feed/');
-		make_card();
-		?>
 	</body>
 </html>

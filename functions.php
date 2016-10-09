@@ -5,10 +5,11 @@ class MyDB{
     public $count;  // SQLによって取得した行数 or 影響した行数
 
     // コンストラクタ
-    function __construct($mode = "array"){
+    function __construct($mode = "json"){
         $this->mode = $mode;
         // DB接続
-        $this->mysqli = new mysqli('localhost','DB-USER','DB-PASS','DB-NAME');
+        $this->mysqli = new mysqli('sql209.gegahost.net','gega_16937875','085gnt230','gega_16937875_rssdata');
+        //$this->mysqli = new mysqli('localhost', 'DB-USER', 'DB-PASS', 'DB-NAME');
         if ($this->mysqli->connect_error){
             echo $this->mysqli->connect_error;
             exit;
@@ -16,19 +17,13 @@ class MyDB{
             $this->mysqli->set_charset("utf8");
         }
     }
-
-    // デストラクタ(DB接続を閉じる)
     function __destruct(){$this->mysqli->close();}
 
     // SQL実行（SELECT/INSERT/UPDATE/DELETE に対応）
     function query($sql){
-        // SQL実行
         $result = $this->mysqli->query($sql);
-        // エラー
         if ($result === FALSE){
-            // エラー内容
             $error = $this->mysqli->errno.": ".$this->mysqli->error;
-            // 戻り値
             $rtn = array(
                 'status' => FALSE,
                 'count'  => 0,
@@ -39,34 +34,26 @@ class MyDB{
         }
 
         if($result === TRUE){
-            // SELECT文以外
-            // 影響のあった行数を格納
             $this->count = $this->mysqli->affected_rows;
-            // 戻り値
             $rtn = array(
                 'status' => TRUE,
                 'count'  => $this->count,
                 'result' => "",
                 'error'  => ""
             );
-            if($this->mode == "array"){return $rtn;}else{return json_encode($rtn);} // JSON形式で返す（デフォルト）
+            if($this->mode == "array"){return $rtn;}else{return json_encode($rtn);}
         }else{
-            // SELECT文
-            // SELECTした行数を格納
             $this->count = $result->num_rows;
-            // 連想配列に格納
             $data = array();
             while($row = $result->fetch_assoc()){$data[] = $row;}
-            // 結果セットを閉じる
             $result->close();
-            // 戻り値
             $rtn = array(
                 'status' => TRUE,
                 'count'  => $this->count,
                 'result' => $data,
                 'error'  => ""
             );
-            if($this->mode == "array"){return $rtn;}else{return json_encode($rtn);} // JSON形式で返す（デフォルト）
+            if($this->mode == "array"){return $rtn;}else{return json_encode($rtn);}
         }
     }
 
@@ -78,18 +65,97 @@ function set_card_info($url){
 	foreach($rss->channel->item as $item){
 		$link        = $item->link;
 		$title       = $item->title;
+        $description = mb_strimwidth(strip_tags($item->description),0,150,"…","utf-8");
 		$date        = date("Y年n月j日",strtotime($item->pubDate));
-		$description = mb_strimwidth(strip_tags($item->description),0,150,"…","utf-8");
-		$data        = array('url'=>$link,'title'=>$title,'description'=>$description,'date'=>$date);
         $db = new MyDB();
-        echo $db->query("INSERT INTO rssdata(url,title,description,day) VALUES('$data->url','$data->title','$data->description','$data->date')");
+        $db->query("INSERT INTO rssdata(url,title,description,day) VALUES('$link','$title','$description','$date')");
 	}
 }
 
 function make_card(){
+    $html = '';
     $db   = new MyDB();
     $json = $db->query("SELECT * FROM rssdata");
-    $data = json_decode($json,true);
-    var_dump($data);
+    $array = json_decode($json,true);
+    $data = $array["result"];
+    while(list($key,$val)=each($data)){
+        $html .= '<div class="card"><a href="' . $val["link"] . '" target="_blank"><h3 class="title">' . $val["title"] . '</h3><span class="date">' . $val["date"] . '</span><br /><p class="text">' . $val["description"] . '</p></a></div>';
+    }
+    echo $html;
+}
+
+function make_rss(){
+    require_once('./src/Item.php');
+	require_once('./src/Feed.php');
+	date_default_timezone_set('Asia/Tokyo');
+    $db   = new MyDB();
+    $json = $db->query("SELECT * FROM rssdata");
+    $array = json_decode($json,true);
+    $data = $array["result"];
+    function atom($data){
+        require_once('./src/ATOM.php');
+        use \FeedWriter\ATOM;
+    	$feed = new ATOM;
+        $feed->setTitle('wkwkrnht-rss');
+        $feed->setLink('http://wkwkrnht.gegahost.net/');
+        $feed->setDate(new DateTime());
+        while(list($key,$val)=each($data)){
+            $item = $feed->createNewItem();
+            $item->setTitle($val["title"]);
+            $item->setLink($val["link"]);
+            $item->setDate(strtotime($val["date"]));
+            $item->setDescription($val["description"]);
+            $feed->addItem($item);
+        }
+        $xml  = $feed->generateFeed();
+        $file = './atom.xml';
+        @file_put_contents($file,$xml);
+    }
+    function rss1($data){
+        require_once('./src/RSS1.php');
+        use \FeedWriter\RSS1;
+    	$feed = new RSS1;
+        $feed->setTitle('wkwkrnht-rss');
+        $feed->setLink('http://wkwkrnht.gegahost.net/');
+        $feed->setDate(new DateTime());
+        $feed->setDescription('wkwkrnhtのブログ');
+        $feed->setChannelAbout('http://wkwkrnht.gegahost.net/');
+        while(list($key,$val)=each($data)){
+            $item = $feed->createNewItem();
+            $item->setTitle($val["title"]);
+            $item->setLink($val["link"]);
+            $item->setDate(strtotime($val["date"]));
+            $item->setDescription($val["description"]);
+            $feed->addItem($item);
+        }
+        $xml  = $feed->generateFeed();
+        $file = './rss1.xml';
+        @file_put_contents($file,$xml);
+    }
+    function rss2($data){
+        require_once('./src/RSS2.php');
+        use \FeedWriter\RSS2;
+    	$feed = new RSS2;
+        $feed->setTitle('wkwkrnht-rss');
+        $feed->setLink('http://wkwkrnht.gegahost.net/');
+        $feed->setDate(new DateTime(),time());
+        $feed->setDescription('wkwkrnhtのブログ');
+        $feed->setChannelAbout('http://wkwkrnht.gegahost.net/');
+        while(list($key,$val)=each($data)){
+            $item = $feed->createNewItem();
+            $item->setId($val["link"],true);
+            $item->setTitle($val["title"]);
+            $item->setLink($val["link"]);
+            $item->setDate(strtotime($val["date"]));
+            $item->setDescription($val["description"]);
+            $feed->addItem($item);
+        }
+        $xml  = $feed->generateFeed();
+        $file = './rss2.xml';
+        @file_put_contents($file,$xml);
+    }
+    atom($data);
+    rss1($data);
+    rss2($data);
 }
 ?>
