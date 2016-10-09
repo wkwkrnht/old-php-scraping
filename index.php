@@ -6,7 +6,15 @@
 		<meta name="viewport" content="width=device-width,initial-scale=1.0">
 		<link rel="canonical" href="http://wkwkrnht.gegahost.net/rss/index.php">
 		<title>wkwkrnht関連のRSSフィード</title>
-		<style>body,header{width:100%;padding:0;margin:0;}header,.sitetitle{background-color:#ffcc00;text-align:center;}header{color:#fff;}.sitetitle{width:80%;}a{color:#333;text-decoration:none;}.sitetitle a{color:#fff;}.card{background-color:#fff;box-shadow:0 3px 6px rgba(0,0,0,.4);height:155px;width:680px;padding:10px;margin:15px calc(50% - 340px);}</style>
+		<style>
+			body,header{width:100%;padding:0;margin:0;}
+			header,.sitetitle{background-color:#ffcc00;text-align:center;}
+			header{color:#fff;}
+			.sitetitle{width:80%;}
+			a{color:#333;text-decoration:none;}
+			.sitetitle a{color:#fff;}
+			.card{display:block;background-color:#fff;box-shadow:0 3px 6px rgba(0,0,0,.4);height:155px;width:680px;padding:10px;margin:15px calc(50% - 340px);}
+		</style>
 	</head>
 	<body>
 		<header>

@@ -8,8 +8,7 @@ class MyDB{
     function __construct($mode = "json"){
         $this->mode = $mode;
         // DB接続
-        $this->mysqli = new mysqli('sql209.gegahost.net','gega_16937875','085gnt230','gega_16937875_rssdata');
-        //$this->mysqli = new mysqli('localhost', 'DB-USER', 'DB-PASS', 'DB-NAME');
+        $this->mysqli = new mysqli('localhost', 'DB-USER', 'DB-PASS', 'DB-NAME');
         if ($this->mysqli->connect_error){
             echo $this->mysqli->connect_error;
             exit;
@@ -73,29 +72,9 @@ function set_card_info($url){
     $db = new MyDB();
 	foreach($rss->channel->item as $item){
 		$link = $item->link;
-        $array_link = $db->query("SELECT link FROM rssdata");
-        $array_link = json_decode($array_link,true);
-        $array_link = $array["result"];
-        if(array_key_exists($link,$array_link)===false){
-            $title       = $item->title;
-            $description = mb_strimwidth(strip_tags($item->description),0,150,"…","utf-8");
-    		$date        = date("Y年n月j日",strtotime($item->pubDate));
-            $db->query("INSERT INTO rssdata(url,title,description,day) VALUES('$link','$title','$description','$date')");
-            require_once('twitteroauth/autoload.php');
-            use Abraham\TwitterOAuth\TwitterOAuth;
-
-            //認証情報４つ
-            $consumerKey       = "Wne0SgFMkbS7QNkt2p7AVBgop";
-            $consumerSecret    = "oAh5MesR9hhmghn6NfUYT1chcY7g2DmsLw5o3Srr56YB9X0cTs";
-            $accessToken       = "3197195484-ripEmUKUVoLn1zYogvAhyhv9MUtKdoHT4mT5LuX";
-            $accessTokenSecret = "ga8rHeIASryFGSne4YrDfNg9kTnzHhVEniFOUJH98ALnA";
-
-            //接続&ツイート&レスポンス確認
-            $connection = new TwitterOAuth($consumerKey,$consumerSecret,$accessToken,$accessTokenSecret);
-            $txt        = $title . $link;
-            $res        = $connection->post("statuses/update",array("status"=>$txt));
-            var_dump($txt);
-        }
+        $title       = $item->title;
+        $description = mb_strimwidth(strip_tags($item->description),0,150,"…","utf-8");
+        $db->query("INSERT INTO rssdata(url,title,description) VALUES('$link','$title','$description')");
 	}
 }
 
@@ -104,13 +83,10 @@ function make_card(){
     $data = get_data();
     while(list($key,$val)=each($data)){
         $html .= '
-        <div class="card">
-            <a href="' . $val["link"] . '" target="_blank">
-                <h3 class="title">' . $val["title"] . '</h3>
-                <span class="date">' . $val["date"] . '</span><br>
-                <p class="text">' . $val["description"] . '</p>
-            </a>
-        </div>';
+        <a href="' . $val["link"] . '" target="_blank" class="card">
+            <h3 class="title">' . $val["title"] . '</h3>
+            <p class="text">' . $val["description"] . '</p>
+        </a>';
     }
     echo $html;
 }
@@ -129,7 +105,6 @@ function make_rss(){
         $item = $feed->createNewItem();
         $item->setTitle($val["title"]);
         $item->setLink($val["link"]);
-        //$item->setDate(strtotime($val["date"]));
         $item->setDescription($val["description"]);
         $feed->addItem($item);
     }
